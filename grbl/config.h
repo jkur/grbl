@@ -245,6 +245,7 @@
 // NOTE: IMPORTANT for Arduino Unos! When enabled, the Z-limit pin D11 and spindle enable pin D12 switch!
 // The hardware PWM output on pin D11 is required for variable spindle output voltages.
 #define VARIABLE_SPINDLE // Default enabled. Comment to disable.
+#define SPINDLE_IS_SERVO
 
 // Used by the variable spindle output only. These parameters set the maximum and minimum spindle speed
 // "S" g-code values to correspond to the maximum and minimum pin voltages. There are 256 discrete and 
@@ -258,7 +259,7 @@
 // When disabled, the PWM pin will still read 0V. Most users will not need this option, but it may be 
 // useful in certain scenarios. This setting does not update the minimum spindle RPM calculations. Any
 // spindle RPM output lower than this value will be set to this value.
-// #define MINIMUM_SPINDLE_PWM 5 // Default disabled. Uncomment to enable. Integer (0-255)
+#define MINIMUM_SPINDLE_PWM 5 // Default disabled. Uncomment to enable. Integer (0-255)
 
 // By default on a 328p(Uno), Grbl combines the variable spindle PWM and the enable into one pin to help 
 // preserve I/O pins. For certain setups, these may need to be separate pins. This configure option uses

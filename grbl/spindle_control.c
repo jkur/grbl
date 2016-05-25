@@ -22,6 +22,11 @@
 #include "grbl.h"
 
 
+#define RC_SERVO_SHORT     15       // Timer ticks for 0.6ms pulse duration  (9 for 0.6ms)
+#define RC_SERVO_LONG      32       // Timer ticks for 2.5 ms pulse duration  (39 for 2.5ms)     
+//#define RC_SERVO_INVERT     1     // Uncomment to invert servo direction
+#define RC_SERVO_RANGE (RC_SERVO_LONG-RC_SERVO_SHORT)
+
 void spindle_init()
 {    
   // Configure variable spindle PWM and enable pin, if requried. On the Uno, PWM and enable are
@@ -86,12 +91,12 @@ void spindle_set_state(uint8_t state, float rpm)
       // TODO: Install the optional capability for frequency-based output for servos.
       #ifdef CPU_MAP_ATMEGA2560
       	TCCRA_REGISTER = (1<<COMB_BIT) | (1<<WAVE1_REGISTER) | (1<<WAVE0_REGISTER);
-        TCCRB_REGISTER = (TCCRB_REGISTER & 0b11111000) | 0x02 | (1<<WAVE2_REGISTER) | (1<<WAVE3_REGISTER); // set to 1/8 Prescaler
+        TCCRB_REGISTER = (TCCRB_REGISTER & 0b11111000) | 0x07 | (1<<WAVE2_REGISTER) | (1<<WAVE3_REGISTER); // set to 1/8 Prescaler
         OCR4A = 0xFFFF; // set the top 16bit value
         uint16_t current_pwm;
       #else
         TCCRA_REGISTER = (1<<COMB_BIT) | (1<<WAVE1_REGISTER) | (1<<WAVE0_REGISTER);
-        TCCRB_REGISTER = (TCCRB_REGISTER & 0b11111000) | 0x02; // set to 1/8 Prescaler
+        TCCRB_REGISTER = (TCCRB_REGISTER & 0b11111000) | 0x07; // set to 1/8 Prescaler
         uint8_t current_pwm;
       #endif
 
@@ -107,8 +112,17 @@ void spindle_set_state(uint8_t state, float rpm)
         #ifdef MINIMUM_SPINDLE_PWM
           if (current_pwm < MINIMUM_SPINDLE_PWM) { current_pwm = MINIMUM_SPINDLE_PWM; }
         #endif
+
+        #ifdef SPINDLE_IS_SERVO
+          #ifdef RC_SERVO_INVERT 
+          current_pwm = floor( RC_SERVO_LONG - rpm*(RC_SERVO_RANGE/SPINDLE_RPM_RANGE));
+          #else
+          current_pwm = floor( rpm*(RC_SERVO_RANGE/SPINDLE_RPM_RANGE) + RC_SERVO_SHORT);
+          #endif
+        #endif
+
         OCR_REGISTER = current_pwm; // Set PWM pin output
-    
+
         // On the Uno, spindle enable and PWM are shared, unless otherwise specified.
         #if defined(CPU_MAP_ATMEGA2560) || defined(USE_SPINDLE_DIR_AS_ENABLE_PIN) 
           #ifdef INVERT_SPINDLE_ENABLE_PIN
